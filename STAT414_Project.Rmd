@@ -1,0 +1,9 @@
+---
+title: "STAT 414 Project"
+subtitle: "Franchesca garcia and Isha Nayak"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
