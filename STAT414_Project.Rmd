@@ -82,3 +82,123 @@ alzheimers <- daly_clean |>
 
 ```
 
+
+```{r numerical data exploration}
+
+#five number summary
+fivenum(alzheimers$DALY)
+sd(alzheimers$DALY)
+
+#region means
+region_means = 
+  alzheimers |>
+    group_by(region) |>
+    summarize(region_daly = mean(DALY)) 
+region_means
+
+#region standard deviation
+region_sd = 
+  alzheimers |>
+    group_by(region) |>
+    summarize(region_daly = sd(DALY)) 
+
+
+#summary output for alcohol on DALY
+model_alcohol= 
+  lm(alzheimers$DALY ~ alzheimers$alcohol)
+
+summary(model_alcohol)
+
+#summary output for bloodGlucose on DALY
+model_bloodGlucose= 
+  lm(alzheimers$DALY ~ alzheimers$bloodGlucose)
+
+summary(model_bloodGlucose)
+  
+
+#summary output for cholesterol on DALY
+model_cholesterol= 
+  lm(alzheimers$DALY ~ alzheimers$cholesterol)
+
+summary(model_cholesterol)
+
+
+#summary output for depression on DALY
+model_depression= 
+  lm(alzheimers$DALY ~ alzheimers$depression)
+
+summary(model_depression)
+
+#summary output for PM2.5 on DALY
+model_PM2.5 = 
+  lm(alzheimers$DALY ~ alzheimers$PM2.5)
+
+summary(model_PM2.5)
+
+#summary output for hypertension on DALY
+model_hypertension = 
+  lm(alzheimers$DALY ~ alzheimers$hypertension) 
+
+summary(model_hypertension)
+
+
+#summary output for obesity on DALY
+model_obesity = 
+  lm(alzheimers$DALY ~ alzheimers$obesity)
+
+summary(model_obesity)
+
+#summary output for inactivity on DALY
+model_inactivity = 
+  lm(alzheimers$DALY ~ alzheimers$inactivity)
+
+summary(model_inactivity)
+```
+```{r visual data exploration}
+alzheimers |>
+  filter(DALY < 2000) |>
+  ggplot() +
+    geom_point(aes(x = alcohol, y = DALY))
+
+alzheimers |>
+  filter(DALY < 2000) |>
+  ggplot() +
+    geom_point(aes(x = bloodGlucose, y = DALY))
+
+alzheimers |>
+  filter(DALY < 2000) |>
+  ggplot() +
+    geom_point(aes(x = cholesterol, y = DALY))
+
+alzheimers |>
+  filter(DALY < 2000) |>
+  ggplot() +
+    geom_point(aes(x = depression, y = DALY))
+
+alzheimers |>
+  filter(DALY < 2000) |>
+  ggplot() +
+    geom_point(aes(x = PM2.5, y = DALY))
+
+alzheimers |>
+  filter(DALY < 2000) |>
+  ggplot() +
+    geom_point(aes(x = hypertension, y = DALY))
+
+alzheimers |>
+  filter(DALY < 2000) |>
+  ggplot() +
+    geom_point(aes(x = obesity, y = DALY))
+
+alzheimers |>
+  filter(DALY < 1000) |>
+  ggplot() +
+    geom_point(aes(x = inactivity, y = DALY))
+
+alzheimers |>
+  filter(DALY < 1000) |>
+  group_by(region) |>
+  summarize(region_daly = mean(DALY)) |>
+  ggplot() +
+    geom_bar(aes(x = region, y = region_daly), stat = "identity")
+```
