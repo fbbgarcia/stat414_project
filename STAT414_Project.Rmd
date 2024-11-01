@@ -8,3 +8,13 @@ output: html_document
 library(tidyverse)
 library(lme4)
 ```
+
+```{r loading data}
+daly <- readxl::read_xlsx("stat414_project_data/daly_dementia.xlsx") |>
+```
+
+```{r cleaning data}
+daly_clean <- daly |>
+  pivot_longer(cols = 2:186, names_to = "country", values_to = "DALY") |>
+  select(-1)
+```
