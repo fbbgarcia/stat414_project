@@ -10,11 +10,75 @@ library(lme4)
 ```
 
 ```{r loading data}
-daly <- readxl::read_xlsx("stat414_project_data/daly_dementia.xlsx") |>
+
+# reading in data for each variable
+daly <- readxl::read_xlsx("stat414_project_data/daly_dementia.xlsx")
+alcohol <- read.csv("stat414_project_data/alcohol.csv")
+bloodGlucose <- read.csv("stat414_project_data/bloodglucose_lvl2.csv")
+cholesterol <- read.csv("stat414_project_data/cholesterol.csv")
+depression <- read.csv("stat414_project_data/depression_lvl2.csv")
+finePartMatter <- read.csv("stat414_project_data/fine_particulate_matter.csv")
+hypertension <- read.csv("stat414_project_data/hypertension.csv")
+physicalActivity <- read.csv("stat414_project_data/insufficient_physical_activity.csv")
+obesity <- read.csv("stat414_project_data/obesity.csv")
+
 ```
 
 ```{r cleaning data}
+
+# transforming DALY data to long format
 daly_clean <- daly |>
   pivot_longer(cols = 2:186, names_to = "country", values_to = "DALY") |>
-  select(-1)
+  rename (year = Yeaer)
+
+# selecting relevant columns for each variable's dataframe
+alcohol_clean <- alcohol |>
+  select(ParentLocation, Location, Period, FactValueNumeric) |>
+  rename(region = ParentLocation, country = Location, year = Period, alcohol = FactValueNumeric)
+
+bloodGlucose_clean <- bloodGlucose |>
+  select(Location, FactValueNumeric) |>
+  rename(country = Location, bloodGlucose = FactValueNumeric)
+
+cholesterol_clean <- cholesterol |>
+  select(Location, Period, FactValueNumeric) |>
+  rename(country = Location, year = Period, cholesterol = FactValueNumeric)
+cholesterol_clean$year[cholesterol_clean$year == 2018] <- 2020
+
+depression_clean <- depression |>
+  select(Location, FactValueNumeric) |>
+  rename(country = Location, depression = FactValueNumeric)
+
+finePartMatter_clean <- finePartMatter |>
+  select(Location, Period, FactValueNumeric) |>
+  rename(country = Location, year = Period, PM2.5 = FactValueNumeric)
+finePartMatter_clean$year[finePartMatter_clean$year == 2018] <- 2020
+
+hypertension_clean <- hypertension |>
+  select(Location, Period, FactValueNumeric) |>
+  rename(country = Location, year = Period, hypertension = FactValueNumeric) |>
+  filter(year == c(2019, 2015, 2010))
+hypertension_clean$year[hypertension_clean$year == 2019] <- 2020
+
+obesity_clean <- obesity |>
+  select(Location, Period, FactValueNumeric) |>
+  rename(country = Location, year = Period, obesity = FactValueNumeric)
+
+physicalActivity_clean <- physicalActivity |>
+  select(Location, Period, FactValueNumeric) |>
+  rename(country = Location, year = Period, inactivity = FactValueNumeric)
+
+
+# combining dataframes
+alzheimers <- daly_clean |>
+  inner_join(alcohol_clean, by = c("year", "country")) |>
+  inner_join(bloodGlucose_clean, by = "country") |>
+  inner_join(cholesterol_clean, by = c("year", "country")) |>
+  inner_join(depression_clean, by = "country") |>
+  inner_join(finePartMatter_clean, by = c("year", "country")) |>
+  inner_join(hypertension_clean, by = c("year", "country")) |>
+  inner_join(obesity_clean, by = c("year", "country")) |>
+  inner_join(physicalActivity_clean, by = c("year", "country"))
+
 ```
+
