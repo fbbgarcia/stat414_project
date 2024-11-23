@@ -1,0 +1,203 @@
+---
+title: "STAT414_Project"
+authors: "Franchesca Garcia and Isha Nayak
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(lme4)
+library(performance)
+library(ggplot2)
+library(ggeffects)
+
+```
+
+```{r reading in data}
+
+daly <- readxl::read_xlsx("dementia_data/daly.xlsx")
+daly <- daly[15:20,]
+
+overweight <- read_csv("dementia_data/overweight.csv")
+obesity <- read_csv("dementia_data/obesity.csv")
+inactivity <- read_csv("dementia_data/inactivity.csv")
+hypertension <- read_csv("dementia_data/hypertension.csv")
+alcohol <- read_csv("dementia_data/alcohol.csv")
+
+```
+
+```{r data cleaning}
+
+# extracting the values we are interested in
+# grand mean centering
+
+daly <- daly |>
+  pivot_longer(cols = 2:186, names_to = "country", values_to = "DALY") |>
+  mutate(cenDALY = DALY - mean(DALY))
+
+overweight <- overweight |>
+  filter(Dim1 == "Both sexes") |>
+  select(Location, Period, FactValueNumeric) |>
+  rename(country = Location, year = Period, overweight = FactValueNumeric) |>
+  mutate(cenOverweight = overweight - mean(overweight))
+
+obesity <- obesity |>
+  select(ParentLocation, Location, FactValueNumeric, Period) |>
+  rename(region = ParentLocation, country = Location, year = Period, obesity = FactValueNumeric) |>
+  mutate(cenObesity = obesity - mean(obesity))
+
+inactivity <- inactivity |>
+  select(Location, FactValueNumeric, Period) |>
+  rename(country = Location, year = Period, inactivity = FactValueNumeric) |>
+  mutate(cenInactivity = inactivity - mean(inactivity))
+
+hypertension <- hypertension |>
+  select(Location, FactValueNumeric, Period) |>
+  rename(country = Location, year = Period, hypertension = FactValueNumeric) |>
+  mutate(cenHypertension = hypertension - mean(hypertension))
+
+alcohol <- alcohol |>
+  select(Location, FactValueNumeric, Period) |>
+  rename(country = Location, year = Period, alcohol = FactValueNumeric) |>
+  mutate(cenAlcohol = alcohol - mean(alcohol, na.rm = TRUE))
+
+```
+
+```{r data cleaning}
+
+# joining data into one dataframe
+
+alzheimers <- daly |>
+  inner_join(overweight, by = c("year", "country")) |>
+  inner_join(obesity, by = c("year", "country")) |>
+  inner_join(inactivity, by = c("year", "country")) |>
+  inner_join(hypertension, by = c("year", "country")) |>
+  inner_join(alcohol, by = c("year", "country")) |>
+  
+  # grand mean centering Year now that all values are in one dataframe
+  mutate(cenYear = year - mean(year)) |>
+  
+  # removing South Sudan because it is missing values for Alcohol
+  filter(country != "South Sudan") |>
+  
+  # Log tranformation on DALY b/c of nonlinearity & fanning of residuals of final model
+  mutate(logDALY = log(DALY)) |>
+  mutate(cenLogDALY = logDALY - mean(logDALY)) 
+
+```
+
+```{r visual data exploration}
+
+# matrix plot
+pairs(alzheimers[, c("cenLogDALY", 
+                     "cenYear",
+                     "cenAlcohol", 
+                     "cenHypertension", 
+                     "cenInactivity",
+                     "cenObesity",
+                     "cenOverweight")],
+      cex = 0.2)
+
+```
+
+
+```{r visual data exploration}
+
+# scatter plot of DALY by Alcohol with smooth lines
+# still trying to make easier to read...
+alzheimers |>
+  ggplot() +
+    geom_point(aes(x = cenAlcohol, y = cenLogDALY, colour = region)) +
+    geom_smooth(aes(x = cenAlcohol, y = cenLogDALY, group = region, 
+                    colour = region),
+                method = "lm",
+                se = FALSE,     
+                linewidth = 0.8,
+                color = "grey25") + 
+    scale_color_brewer(palette = "Set2") +  
+    theme_bw() +
+    labs(title = "DALY of Dementias by Alcohol Harmful Consumption",
+         x = "Alcohol Consumption",
+         y = "DALY",
+         colour = "Region", 
+         linetype = "Region") 
+
+# will make scatter plots for other variables too 
+
+```
+
+```{r grouping variable exploration}
+
+# exploring variation between Countries (Level 2) 
+modelCountryOLS <- lm(cenLogDALY ~ country, data = alzheimers)
+anova(modelCountryOLS)
+
+```
+
+```{r null model}
+
+# null model with random effect of Country
+model0Country <- lmer(cenLogDALY ~ (1 | country), data = alzheimers)
+summary(model0Country)
+performance(model0Country)
+logLik(model0Country)
+
+```
+
+```{r}
+
+# exploring fixed effects and crosslevel interactions
+
+# adding Level 1 variables
+model1a <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenHypertension + cenObesity + (1 | country), data = alzheimers)
+summary(model1a)
+anova(model0Country, model1a)
+
+# removing Hypertension (was not significant)
+model1b <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + (1 | country), data = alzheimers)
+summary(model1b)
+anova(model1a, model1b)
+
+# adding Region (Level 2 variable)
+model1c <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + region + (1 | country), data = alzheimers)
+summary(model1c)
+anova(model1b, model1c)
+
+# adding interaction between Hypertension and Region (is significant)
+model1d <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + cenHypertension*region + (1 | country), data = alzheimers)
+summary(model1d)
+anova(model1c, model1d)
+
+# adding interaction between Obesitiy and Region
+model1e <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity*region + cenHypertension*region + (1 | country), data = alzheimers)
+summary(model1e)
+anova(model1d, model1e)
+
+# adding interaction between Alcohol and Region
+# FINAL MODEL
+model1f <- lmer(cenLogDALY ~ cenYear + cenAlcohol*region + cenObesity*region + cenHypertension*region + (1 | country), data = alzheimers)
+summary(model1f)
+anova(model1d, model1f)
+
+final_model <- model1f
+```
+
+```{r diagnostic analysis}
+
+# Residuals vs Fits
+plot(final_model)
+
+# QQ Plot
+qqnorm(residuals(final_model))
+qqline(residuals(final_model), col = "red")
+
+# Histogram
+hist(residuals(final_model), main = "Histogram of Residuals", xlab = "Residuals")
+
+# Effects Plot?
+#plot(allEffects(final_model))
+
+# Leverage Plot?
+
+```
