@@ -11,6 +11,7 @@ library(lme4)
 library(performance)
 library(ggplot2)
 library(ggeffects)
+library(car)
 
 ```
 
@@ -123,6 +124,11 @@ alzheimers |>
          colour = "Region", 
          linetype = "Region") 
 
+alzheimers |>
+  ggplot() +
+    geom_point(aes(x = region, y = cenLogDALY)) +
+    geom_smooth(aes(x = region, y = cenLogDALY)) 
+
 # will make scatter plots for other variables too 
 
 ```
@@ -150,37 +156,40 @@ logLik(model0Country)
 # exploring fixed effects and crosslevel interactions
 
 # adding Level 1 variables
-model1a <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenHypertension + cenObesity + (1 | country), data = alzheimers)
+model1a <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + (1 | country), data = alzheimers)
 summary(model1a)
 anova(model0Country, model1a)
 
-# removing Hypertension (was not significant)
-model1b <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + (1 | country), data = alzheimers)
+# adding Region (Level 2 variable)
+model1b <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + region + (1 | country), data = alzheimers)
 summary(model1b)
 anova(model1a, model1b)
 
-# adding Region (Level 2 variable)
-model1c <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + region + (1 | country), data = alzheimers)
+# adding interaction between Obesetiy and Region
+model1c <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity*region + (1 | country), data = alzheimers)
 summary(model1c)
 anova(model1b, model1c)
 
-# adding interaction between Hypertension and Region (is significant)
-model1d <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + cenHypertension*region + (1 | country), data = alzheimers)
+# adding interaction between Alcohol and Region
+# FINAL MODEL
+model1d <- lmer(cenLogDALY ~ cenYear + cenAlcohol*region + cenObesity*region + (1 | country), data = alzheimers)
 summary(model1d)
 anova(model1c, model1d)
 
-# adding interaction between Obesitiy and Region
-model1e <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity*region + cenHypertension*region + (1 | country), data = alzheimers)
-summary(model1e)
-anova(model1d, model1e)
+```
 
-# adding interaction between Alcohol and Region
-# FINAL MODEL
-model1f <- lmer(cenLogDALY ~ cenYear + cenAlcohol*region + cenObesity*region + cenHypertension*region + (1 | country), data = alzheimers)
-summary(model1f)
-anova(model1d, model1f)
+```{r}
 
-final_model <- model1f
+final_model <- model1d
+
+summary(model0Country)
+performance(model0Country)
+logLik(model0Country)
+
+summary(final_model)
+performance(final_model)
+logLik(final_model)
+
 ```
 
 ```{r diagnostic analysis}
