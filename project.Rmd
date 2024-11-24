@@ -165,14 +165,14 @@ model1b <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + region + (1 | c
 summary(model1b)
 anova(model1a, model1b)
 
-# adding interaction between Obesetiy and Region
+# adding interaction between Obesitiy and Region
 model1c <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity*region + (1 | country), data = alzheimers)
 summary(model1c)
 anova(model1b, model1c)
 
-# adding interaction between Alcohol and Region
+# removing Alcohol, adding interaction between Alcohol and Region
 # FINAL MODEL
-model1d <- lmer(cenLogDALY ~ cenYear + cenAlcohol*region + cenObesity*region + (1 | country), data = alzheimers)
+model1d <- lmer(cenLogDALY ~ cenYear + cenAlcohol:region + cenObesity*region + (1 | country), data = alzheimers)
 summary(model1d)
 anova(model1c, model1d)
 
