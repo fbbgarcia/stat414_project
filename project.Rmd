@@ -1,7 +1,9 @@
 ---
 title: "STAT414_Project"
-authors: "Franchesca Garcia and Isha Nayak
+authors: "Franchesca Garcia and Isha Nayak"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -12,6 +14,7 @@ library(performance)
 library(ggplot2)
 library(ggeffects)
 library(car)
+library(emmeans)
 
 ```
 
@@ -84,7 +87,7 @@ alzheimers <- daly |>
   # removing South Sudan because it is missing values for Alcohol
   filter(country != "South Sudan") |>
   
-  # log tranformation on DALY b/c of nonlinearity & fanning of residuals of final model
+  # log tranformation on DALY b/c of nonlinearity trend
   mutate(logDALY = log(DALY)) |>
   mutate(cenLogDALY = logDALY - mean(logDALY)) 
 
@@ -101,8 +104,6 @@ pairs(alzheimers[, c("cenLogDALY",
                      "cenObesity",
                      "cenOverweight")],
       cex = 0.2)
-
-# notice correlation between Obesity and Overweight, Inactivity, and Hypertension
 
 ```
 
@@ -128,13 +129,13 @@ alzheimers |>
                 alpha = 1, stroke = FALSE, size = 1.5) +
     scale_color_manual(values = region_colors) + 
     theme_minimal() +
-    labs(title = "How does a country's burden of dementias relate to ",
-         x = "Alcohol Consumption",
-         y = "DALY",
+    labs(title = "DALY due to Dementias by Alcohol",
+         x = "Prevalence of heavy episodic drinking (%)",
+         y = "DALY (years per capita)",
          colour = "Region", 
          linetype = "Region") 
 
-# scatter plots of DALY by Alcohol seperated by Region
+# scatter plots of DALY by Alcohol separated by Region
 alzheimers |>
   ggplot() +
     geom_point(aes(x = alcohol, y = DALY, colour = region),
@@ -142,9 +143,9 @@ alzheimers |>
     scale_color_manual(values = region_colors) + 
     facet_wrap(~ region) + 
     theme_minimal() +
-    labs(title = "DALY of Dementias by Alcohol Harmful Consumption",
-         x = "Alcohol Consumption",
-         y = "DALY",
+    labs(title = "DALY due to Dementias by Alcohol",
+         x = "Prevalence of heavy episodic drinking (%)",
+         y = "DALY (years per capita)",
          colour = "Region", 
          linetype = "Region") 
 
@@ -157,9 +158,9 @@ alzheimers |>
                 alpha = 1, stroke = FALSE, size = 1.5) +
     scale_color_manual(values = region_colors) + 
     theme_minimal() +
-    labs(title = "DALY of Dementias by Obesity",
-         x = "Obesity",
-         y = "DALY",
+    labs(title = "DALY due to Dementias by Obesity",
+         x = "Prevalence of obesity (%)",
+         y = "DALY (years per capita)",
          colour = "Region", 
          linetype = "Region") 
 
@@ -171,21 +172,77 @@ alzheimers |>
     scale_color_manual(values = region_colors) + 
     facet_wrap(~ region) + 
     theme_minimal() +
-    labs(title = "DALY of Dementias by Obesity",
-         x = "Obesity",
-         y = "DALY",
+    labs(title = "DALY due to Dementias by Obesity",
+         x = "Prevalence of obesity (%)",
+         y = "DALY (years per capita)",
          colour = "Region", 
          linetype = "Region") 
 
+```
+
+```{r visual data exploration}
+
+# scatter plot of DALY by Region
+DALY_means <- alzheimers |>
+  group_by(region) |>
+  summarise(mean_DALY = mean(DALY, na.rm = TRUE))
 
 alzheimers |>
   ggplot() +
-    geom_point(aes(x = region, y = DALY, color = region), show.legend = FALSE) +
+    geom_point(aes(x = region, y = DALY, color = region), alpha = 0.4, show.legend = FALSE) +
+    geom_point(data = DALY_means, aes(x = region, y = mean_DALY), show.legend = FALSE, color = "black") +
     scale_color_manual(values = region_colors) +
     theme_minimal() +
-    labs(title = "DALY of Dementias by Region",
+    labs(title = "DALY due to Dementias by Region",
          x = "Region",
-         y = "DALY") 
+         y = "DALY (years per capita)") 
+
+
+
+# scatter plot of Alcohol by Region
+alcohol_means <- alzheimers |>
+  group_by(region) |>
+  summarise(mean_Alcohol = mean(alcohol, na.rm = TRUE))
+
+alzheimers |>
+  ggplot() +
+    geom_point(aes(x = region, y = alcohol, color = region), alpha = 0.4, show.legend = FALSE) +
+    geom_point(data = alcohol_means, aes(x = region, y = mean_Alcohol), show.legend = FALSE, color = "black") +
+    scale_color_manual(values = region_colors) +
+    theme_minimal() +
+    labs(title = "Alcohol by Region",
+         x = "Region",
+         y = "Prevelance of episodic drinking (%)") 
+
+
+
+# scatter plot of Obesity by Region
+obesity_means <- alzheimers |>
+  group_by(region) |>
+  summarise(mean_Obesity = mean(obesity, na.rm = TRUE))
+
+alzheimers |>
+  ggplot() +
+    geom_point(aes(x = region, y = obesity, color = region), alpha = 0.4, show.legend = FALSE) +
+    geom_point(data = obesity_means, aes(x = region, y = mean_Obesity), show.legend = FALSE, color = "black") +
+    scale_color_manual(values = region_colors) +
+    theme_minimal() +
+    labs(title = "Obesity by Region",
+         x = "Region",
+         y = "Prevelance of Obesity (%)") 
+
+
+
+# scatter plot of DALY by Country
+#alzheimers |>
+#  ggplot() +
+#    geom_point(aes(x = country, y = DALY, color = region), 
+#        show.legend = FALSE, label = FALSE) +
+#    scale_color_manual(values = region_colors) +
+#    theme_minimal() +
+#    labs(title = "DALY due to Dementias by Country",
+#         x = "Country",
+#         y = "DALY (years per capita)") 
 
 ```
 
@@ -238,20 +295,20 @@ anova(model1c, model1d)
 
 final_model <- model1d
 
-summary(model0Country)
-performance(model0Country)
-logLik(model0Country)
-
 summary(final_model)
 performance(final_model)
 logLik(final_model)
+anova(model0Country, final_model)
 
 ```
 
 ```{r diagnostic analysis}
 
+par(mfrow = c(1, 3))  
+
 # Residuals vs Fits
-plot(final_model)
+plot(fitted(final_model), residuals(final_model), main = "Residuals vs Fitted Values", xlab = "Fitted Values", ylab = "Residuals")
+
 
 # QQ Plot
 qqnorm(residuals(final_model))
@@ -260,38 +317,95 @@ qqline(residuals(final_model), col = "red")
 # Histogram
 hist(residuals(final_model), main = "Histogram of Residuals", xlab = "Residuals")
 
+par(mfrow = c(1, 1))
+
+
+
 # Interaction Plot for Alcohol
 predicted_Ainteraction <- ggpredict(final_model, terms = c("cenAlcohol", "region"))
 plot(predicted_Ainteraction) +
-  labs(title = "Interaction between Obesity and Region",
-       x = "Centered Obesity",
-       y = "Predicted DALY") +
+  scale_color_manual(values = region_colors) + 
+  scale_fill_manual(values = region_colors) +
+  labs(title = "Association between ln(DALY) and Alcohol",
+       x = "Prevalence of heavy episodic drinking (%)",
+       y = "Estimated ln(DALY) (years per capita)") +
   theme_minimal()
 
+# Back-transformed
 predicted_Ainteraction$predicted <- exp(predicted_Ainteraction$predicted);
 predicted_Ainteraction$conf.low <- exp(predicted_Ainteraction$conf.low); predicted_Ainteraction$conf.high <- exp(predicted_Ainteraction$conf.high);
 plot(predicted_Ainteraction) +
-  labs(title = "Interaction between Alcohol and Region",
-       x = "Centered Alcohol",
-       y = "Predicted DALY") +
+  scale_color_manual(values = region_colors) + 
+  scale_fill_manual(values = region_colors) +
+  labs(title = "Association between DALY and Alcohol",
+       x = "Prevalence of heavy episodic drinking (%)",
+       y = "Estimated DALY (years per capita)") +
   theme_minimal()
+
+
 
 # Interaction Plot for Obesity
 predicted_Ointeraction <- ggpredict(final_model, terms = c("cenObesity", "region"))
 plot(predicted_Ointeraction) +
-  labs(title = "Interaction between cenObesity and Region",
-       x = "Centered Obesity",
-       y = "Predicted DALY") +
+  scale_color_manual(values = region_colors) + 
+  scale_fill_manual(values = region_colors) +
+  labs(title = "Association between ln(DALY) and Obesity",
+       x = "Prevalence of obesity (%)",
+       y = "Estimated ln(DALY) (years per capita)") +
   theme_minimal()
 
 # Back-transformed
 predicted_Ointeraction$predicted <- exp(predicted_Ointeraction$predicted);
 predicted_Ointeraction$conf.low <- exp(predicted_Ointeraction$conf.low); predicted_Ointeraction$conf.high <- exp(predicted_Ointeraction$conf.high);
 plot(predicted_Ointeraction) +
-  labs(title = "Interaction between Obesity and Region",
-       x = "Centered Alcohol",
-       y = "Predicted DALY") +
+  scale_color_manual(values = region_colors) +
+  scale_fill_manual(values = region_colors) +
+  labs(title = "Association between DALY and Obesity",
+       x = "Prevalence of obesity (%)",
+       y = "Estimated DALY (years per capita)") +
+  coord_cartesian(ylim = c(0, 20)) +
   theme_minimal()
+
+```
+
+
+
+
+```{r}
+
+# plotting lines of Alcohol by Region
+alcohol_trends <- emtrends(final_model, ~ region, var = "cenAlcohol")
+alcohol_trends <- as.data.frame(alcohol_trends)
+alcohol_trends$cenAlcohol.trend <- exp(alcohol_trends$cenAlcohol.trend)
+alcohol_trends$lower.CL <- exp(alcohol_trends$lower.CL)
+alcohol_trends$upper.CL <- exp(alcohol_trends$upper.CL)
+
+ggplot(alcohol_trends, aes(x = region, y = cenAlcohol.trend)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  coord_flip() +
+  scale_x_discrete(limits = rev(levels(factor(alzheimers$region)))) +
+  theme_minimal() +
+  labs(title = "Estimated multiplicative change in DALY\nper percentage point increase in heavy episodic drinking",
+       x = "Region",
+       y = "Estimated Multiplicative Change")
+
+# plotting lines of Obesity by Region
+obesity_trends <- emtrends(final_model, ~ region, var = "cenObesity")
+obesity_trends <- as.data.frame(obesity_trends)
+obesity_trends$cenObesity.trend <- exp(obesity_trends$cenObesity.trend)
+obesity_trends$lower.CL <- exp(obesity_trends$lower.CL)
+obesity_trends$upper.CL <- exp(obesity_trends$upper.CL)
+
+ggplot(obesity_trends, aes(x = region, y = cenObesity.trend)) +
+  geom_point() +  
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  coord_flip() +
+  scale_x_discrete(limits = rev(levels(factor(alzheimers$region)))) +
+  theme_minimal() +
+  labs(title = "Estimated multiplicative change in DALY\nper percentage point increase in obesity",
+       x = "Region",
+       y = "Estimated Multiplicative Change")
 
 ```
 
