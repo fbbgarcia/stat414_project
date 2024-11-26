@@ -38,8 +38,7 @@ alcohol <- read_csv("dementia_data/alcohol.csv")
 
 daly <- daly |>
   pivot_longer(cols = 2:186, names_to = "country", values_to = "DALY") |>
-  mutate(cenDALY = DALY - mean(DALY)) |>
-  filter (year > 2000)
+  mutate(cenDALY = DALY - mean(DALY))
 
 overweight <- overweight |>
   filter(Dim1 == "Both sexes") |>
