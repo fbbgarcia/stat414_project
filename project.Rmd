@@ -38,7 +38,8 @@ alcohol <- read_csv("dementia_data/alcohol.csv")
 
 daly <- daly |>
   pivot_longer(cols = 2:186, names_to = "country", values_to = "DALY") |>
-  mutate(cenDALY = DALY - mean(DALY))
+  mutate(cenDALY = DALY - mean(DALY)) |>
+  filter (year > 2000)
 
 overweight <- overweight |>
   filter(Dim1 == "Both sexes") |>
@@ -81,13 +82,13 @@ alzheimers <- daly |>
   inner_join(hypertension, by = c("year", "country")) |>
   inner_join(alcohol, by = c("year", "country")) |>
   
+  # removing South Sudan because it is missing values for Alcohol
+  filter(country != "South Sudan") |>
+    
   # grand mean centering Year now that all values are in one dataframe
   mutate(cenYear = year - mean(year)) |>
   
-  # removing South Sudan because it is missing values for Alcohol
-  filter(country != "South Sudan") |>
-  
-  # log tranformation on DALY b/c of nonlinearity trend
+  # log transformation on DALY b/c of nonlinear trend
   mutate(logDALY = log(DALY)) |>
   mutate(cenLogDALY = logDALY - mean(logDALY)) 
 
