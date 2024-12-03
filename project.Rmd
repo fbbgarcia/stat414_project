@@ -283,12 +283,17 @@ model1c <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity*region + (1 | cou
 summary(model1c)
 anova(model1b, model1c)
 
-# removing Alcohol, adding interaction between Alcohol and Region
-# FINAL MODEL
-model1d <- lmer(cenLogDALY ~ cenYear + cenAlcohol:region + cenObesity*region + (1 | country), data = alzheimers)
+# adding interaction between Alcohol and Region
+model1d <- lmer(cenLogDALY ~ cenYear + cenAlcohol*region + cenObesity*region + (1 | country), data = alzheimers)
 summary(model1d)
 anova(model1c, model1d)
 
+# removing Alcohol
+# FINAL MODEL
+model1e <- lmer(cenLogDALY ~ cenYear + cenAlcohol:region + cenObesity*region + (1 | country), data = alzheimers)
+summary(model1e)
+anova(model1c, model1e)
+anova(model1d, model1e)
 ```
 
 ```{r}
@@ -321,54 +326,55 @@ par(mfrow = c(1, 1))
 
 
 
-# Interaction Plot for Alcohol
+# Effect Plot for Alcohol
 predicted_Ainteraction <- ggpredict(final_model, terms = c("cenAlcohol", "region"))
-plot(predicted_Ainteraction) +
-  scale_color_manual(values = region_colors) + 
-  scale_fill_manual(values = region_colors) +
-  labs(title = "Association between ln(DALY) and Alcohol",
-       x = "Prevalence of heavy episodic drinking (%)",
-       y = "Estimated ln(DALY) (years per capita)") +
-  theme_minimal()
+#plot(predicted_Ainteraction) +
+#  scale_color_manual(values = region_colors) + 
+#  scale_fill_manual(values = region_colors) +
+#  labs(title = "Association between ln(DALY) and Alcohol",
+#       x = "Prevalence of heavy episodic drinking (%)",
+#       y = "Estimated ln(DALY) (years per capita)") +
+#  theme_minimal()
 
 # Back-transformed
 predicted_Ainteraction$predicted <- exp(predicted_Ainteraction$predicted);
 predicted_Ainteraction$conf.low <- exp(predicted_Ainteraction$conf.low); predicted_Ainteraction$conf.high <- exp(predicted_Ainteraction$conf.high);
+predicted_Ainteraction$region = predicted_Ainteraction$group;
 plot(predicted_Ainteraction) +
   scale_color_manual(values = region_colors) + 
   scale_fill_manual(values = region_colors) +
-  labs(title = "Association between DALY and Alcohol",
+  labs(title = "Marginal Effect of Alcohol",
        x = "Prevalence of heavy episodic drinking (%)",
        y = "Estimated DALY (years per capita)") +
   theme_minimal()
 
 
 
-# Interaction Plot for Obesity
+# Effect Plot for Obesity
 predicted_Ointeraction <- ggpredict(final_model, terms = c("cenObesity", "region"))
-plot(predicted_Ointeraction) +
-  scale_color_manual(values = region_colors) + 
-  scale_fill_manual(values = region_colors) +
-  labs(title = "Association between ln(DALY) and Obesity",
-       x = "Prevalence of obesity (%)",
-       y = "Estimated ln(DALY) (years per capita)") +
-  theme_minimal()
+#plot(predicted_Ointeraction) +
+#  scale_color_manual(values = region_colors) + 
+#  scale_fill_manual(values = region_colors) +
+#  labs(title = "Association between ln(DALY) and Obesity",
+#       x = "Prevalence of obesity (%)",
+#       y = "Estimated ln(DALY) (years per capita)") +
+#  theme_minimal()
 
 # Back-transformed
 predicted_Ointeraction$predicted <- exp(predicted_Ointeraction$predicted);
 predicted_Ointeraction$conf.low <- exp(predicted_Ointeraction$conf.low); predicted_Ointeraction$conf.high <- exp(predicted_Ointeraction$conf.high);
+predicted_Ointeraction$region <- predicted_Ointeraction$group;
+predicted_Ointeraction$group_col <- predicted_Ointeraction$region_col;
 plot(predicted_Ointeraction) +
   scale_color_manual(values = region_colors) +
   scale_fill_manual(values = region_colors) +
-  labs(title = "Association between DALY and Obesity",
+  labs(title = "Marginal Effect of Obesity",
        x = "Prevalence of obesity (%)",
        y = "Estimated DALY (years per capita)") +
   coord_cartesian(ylim = c(0, 20)) +
   theme_minimal()
 
 ```
-
-
 
 
 ```{r}
@@ -408,5 +414,3 @@ ggplot(obesity_trends, aes(x = region, y = cenObesity.trend)) +
        y = "Estimated Multiplicative Change")
 
 ```
-
-
