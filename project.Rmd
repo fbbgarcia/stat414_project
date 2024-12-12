@@ -20,8 +20,9 @@ library(emmeans)
 
 ```{r reading in data}
 
-daly <- readxl::read_xlsx("dementia_data/daly.xlsx")
-daly <- daly[15:20,]
+DALYs <- readxl::read_xlsx("dementia_data/daly.xlsx")
+# selecting standardized DALYs
+DALYs <- DALYs[15:20,]
 
 overweight <- read_csv("dementia_data/overweight.csv")
 obesity <- read_csv("dementia_data/obesity.csv")
@@ -36,9 +37,9 @@ alcohol <- read_csv("dementia_data/alcohol.csv")
 # extracting the values we are interested in
 # grand mean centering
 
-daly <- daly |>
-  pivot_longer(cols = 2:186, names_to = "country", values_to = "DALY") |>
-  mutate(cenDALY = DALY - mean(DALY))
+DALYs <- DALYs |>
+  pivot_longer(cols = 2:186, names_to = "country", values_to = "DALYs") |>
+  mutate(cenDALYs = DALYs - mean(DALYs))
 
 overweight <- overweight |>
   filter(Dim1 == "Both sexes") |>
@@ -74,7 +75,7 @@ alcohol <- alcohol |>
 
 # joining data into one dataframe
 
-alzheimers <- daly |>
+alzheimers <- DALYs |>
   inner_join(overweight, by = c("year", "country")) |>
   inner_join(obesity, by = c("year", "country")) |>
   inner_join(inactivity, by = c("year", "country")) |>
@@ -87,16 +88,16 @@ alzheimers <- daly |>
   # grand mean centering Year now that all values are in one dataframe
   mutate(cenYear = year - mean(year)) |>
   
-  # log transformation on DALY b/c of nonlinear trend
-  mutate(logDALY = log(DALY)) |>
-  mutate(cenLogDALY = logDALY - mean(logDALY)) 
+  # log transformation on DALYs b/c of nonlinear trends
+  mutate(logDALYs = log(DALYs)) |>
+  mutate(cenLogDALYs = logDALYs - mean(logDALYs)) 
 
 ```
 
 ```{r visual data exploration}
 
 # matrix plot
-pairs(alzheimers[, c("cenLogDALY", 
+pairs(alzheimers[, c("cenLogDALYs", 
                      "cenYear",
                      "cenAlcohol", 
                      "cenHypertension", 
@@ -122,59 +123,59 @@ region_colors <- c(
 
 
 
-# scatter plot of DALY by Alcohol
+# scatter plot of DALYs by Alcohol
 alzheimers |>
   ggplot() +
-    geom_point(aes(x = alcohol, y = DALY, colour = region),
+    geom_point(aes(x = alcohol, y = DALYs, colour = region),
                 alpha = 1, stroke = FALSE, size = 1.5) +
     scale_color_manual(values = region_colors) + 
     theme_minimal() +
-    labs(title = "DALY due to Dementias by Alcohol",
+    labs(title = "Observed DALYs trend by Alcohol",
          x = "Prevalence of heavy episodic drinking (%)",
-         y = "DALY (years per capita)",
+         y = "DALYs (years per capita)",
          colour = "Region", 
          linetype = "Region") 
 
-# scatter plots of DALY by Alcohol separated by Region
+# scatter plots of DALYs by Alcohol separated by Region
 alzheimers |>
   ggplot() +
-    geom_point(aes(x = alcohol, y = DALY, colour = region),
+    geom_point(aes(x = alcohol, y = DALYs, colour = region),
                 alpha = 1, stroke = FALSE, size = 1, show.legend = FALSE) +
     scale_color_manual(values = region_colors) + 
     facet_wrap(~ region) + 
     theme_minimal() +
-    labs(title = "DALY due to Dementias by Alcohol",
+    labs(title = "Observed regional DALYs trends by Alcohol",
          x = "Prevalence of heavy episodic drinking (%)",
-         y = "DALY (years per capita)",
+         y = "DALYs (years per capita)",
          colour = "Region", 
          linetype = "Region") 
 
 
 
-# scatter plot of DALY by Obesity
+# scatter plot of DALYs by Obesity
 alzheimers |>
   ggplot() +
-    geom_point(aes(x = obesity, y = DALY, colour = region),
+    geom_point(aes(x = obesity, y = DALYs, colour = region),
                 alpha = 1, stroke = FALSE, size = 1.5) +
     scale_color_manual(values = region_colors) + 
     theme_minimal() +
-    labs(title = "DALY due to Dementias by Obesity",
+    labs(title = "Observed DALYs trend by Obesity",
          x = "Prevalence of obesity (%)",
-         y = "DALY (years per capita)",
+         y = "DALYs (years per capita)",
          colour = "Region", 
          linetype = "Region") 
 
-# scatter plots of DALY by Obesity seperated by Region
+# scatter plots of DALYs by Obesity seperated by Region
 alzheimers |>
   ggplot() +
-    geom_point(aes(x = obesity, y = DALY, colour = region),
+    geom_point(aes(x = obesity, y = DALYs, colour = region),
                 alpha = 1, stroke = FALSE, size = 1, show.legend = FALSE) +
     scale_color_manual(values = region_colors) + 
     facet_wrap(~ region) + 
     theme_minimal() +
-    labs(title = "DALY due to Dementias by Obesity",
+    labs(title = "Observed regional DALYs trends by Obesity",
          x = "Prevalence of obesity (%)",
-         y = "DALY (years per capita)",
+         y = "DALYs (years per capita)",
          colour = "Region", 
          linetype = "Region") 
 
@@ -182,20 +183,20 @@ alzheimers |>
 
 ```{r visual data exploration}
 
-# scatter plot of DALY by Region
-DALY_means <- alzheimers |>
+# scatter plot of DALYs by Region
+DALYs_means <- alzheimers |>
   group_by(region) |>
-  summarise(mean_DALY = mean(DALY, na.rm = TRUE))
+  summarise(mean_DALYs = mean(DALYs, na.rm = TRUE))
 
 alzheimers |>
   ggplot() +
-    geom_point(aes(x = region, y = DALY, color = region), alpha = 0.4, show.legend = FALSE) +
-    geom_point(data = DALY_means, aes(x = region, y = mean_DALY), show.legend = FALSE, color = "black") +
+    geom_point(aes(x = region, y = DALYs, color = region), alpha = 0.4, show.legend = FALSE) +
+    geom_point(data = DALYs_means, aes(x = region, y = mean_DALYs), show.legend = FALSE, color = "black") +
     scale_color_manual(values = region_colors) +
     theme_minimal() +
-    labs(title = "DALY due to Dementias by Region",
+    labs(title = "DALYs due to Dementias by Region",
          x = "Region",
-         y = "DALY (years per capita)") 
+         y = "DALYs (years per capita)") 
 
 
 
@@ -231,72 +232,65 @@ alzheimers |>
          x = "Region",
          y = "Prevelance of Obesity (%)") 
 
-
-
-# scatter plot of DALY by Country
-#alzheimers |>
-#  ggplot() +
-#    geom_point(aes(x = country, y = DALY, color = region), 
-#        show.legend = FALSE, label = FALSE) +
-#    scale_color_manual(values = region_colors) +
-#    theme_minimal() +
-#    labs(title = "DALY due to Dementias by Country",
-#         x = "Country",
-#         y = "DALY (years per capita)") 
-
 ```
 
 ```{r grouping variable exploration}
 
 # exploring variation between Countries (Level 2) 
-modelCountryOLS <- lm(cenLogDALY ~ country, data = alzheimers)
+modelCountryOLS <- lm(cenLogDALYs ~ country, data = alzheimers)
 anova(modelCountryOLS)
+
+# scatter plot of DALYs by Country
+#alzheimers |>
+#  ggplot() +
+#    geom_point(aes(x = country, y = DALYs, color = region), 
+#        show.legend = FALSE, label = FALSE) +
+#    scale_color_manual(values = region_colors) +
+#    theme_minimal() +
+#    labs(title = "DALYs due to Dementias by Country",
+#         x = "Country",
+#         y = "DALYs (years per capita)") 
 
 ```
 
 ```{r null model}
 
-# null model with random effect of Country
-model0Country <- lmer(cenLogDALY ~ (1 | country), data = alzheimers)
+# null model with random intercepts for Country
+model0Country <- lmer(cenLogDALYs ~ (1 | country), data = alzheimers)
 summary(model0Country)
 performance(model0Country)
 logLik(model0Country)
 
 ```
 
-```{r}
+```{r model building}
 
-# exploring fixed effects and crosslevel interactions
+# exploring fixed effects and cross-level interactions
 
 # adding Level 1 variables
-model1a <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + (1 | country), data = alzheimers)
+model1a <- lmer(cenLogDALYs ~ cenYear + cenAlcohol + cenObesity + (1 | country), data = alzheimers)
 summary(model1a)
 anova(model0Country, model1a)
 
 # adding Region (Level 2 variable)
-model1b <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity + region + (1 | country), data = alzheimers)
+model1b <- lmer(cenLogDALYs ~ cenYear + cenAlcohol + cenObesity + region + (1 | country), data = alzheimers)
 summary(model1b)
 anova(model1a, model1b)
 
-# adding interaction between Obesitiy and Region
-model1c <- lmer(cenLogDALY ~ cenYear + cenAlcohol + cenObesity*region + (1 | country), data = alzheimers)
+# adding interaction between Obesity and Region
+model1c <- lmer(cenLogDALYs ~ cenYear + cenAlcohol + cenObesity*region + (1 | country), data = alzheimers)
 summary(model1c)
 anova(model1b, model1c)
 
 # adding interaction between Alcohol and Region
-model1d <- lmer(cenLogDALY ~ cenYear + cenAlcohol*region + cenObesity*region + (1 | country), data = alzheimers)
+# FINAL MODEL
+model1d <- lmer(cenLogDALYs ~ cenYear + cenAlcohol*region + cenObesity*region + (1 | country), data = alzheimers)
 summary(model1d)
 anova(model1c, model1d)
 
-# removing Alcohol
-# FINAL MODEL
-model1e <- lmer(cenLogDALY ~ cenYear + cenAlcohol:region + cenObesity*region + (1 | country), data = alzheimers)
-summary(model1e)
-anova(model1c, model1e)
-anova(model1d, model1e)
 ```
 
-```{r}
+```{r final model}
 
 final_model <- model1d
 
@@ -304,6 +298,84 @@ summary(final_model)
 performance(final_model)
 logLik(final_model)
 anova(model0Country, final_model)
+
+```
+
+
+```{r visualizing results}
+
+# Marginal Effect Plot for Alcohol
+predicted_Ainteraction <- ggpredict(final_model, terms = c("cenAlcohol", "region"))
+
+# back-transformation
+predicted_Ainteraction$predicted <- exp(predicted_Ainteraction$predicted);
+predicted_Ainteraction$conf.low <- exp(predicted_Ainteraction$conf.low); predicted_Ainteraction$conf.high <- exp(predicted_Ainteraction$conf.high);
+predicted_Ainteraction$region = predicted_Ainteraction$group;
+plot(predicted_Ainteraction) +
+  scale_color_manual(values = region_colors) + 
+  scale_fill_manual(values = region_colors) +
+  labs(title = "Marginal Effect of Alcohol",
+       x = "Prevalence of heavy episodic drinking (%)",
+       y = "Estimated DALYs (years per capita)") +
+  theme_minimal()
+
+
+
+# Marginal Effect Plot for Obesity
+predicted_Ointeraction <- ggpredict(final_model, terms = c("cenObesity", "region"))
+
+# back-transformation
+predicted_Ointeraction$predicted <- exp(predicted_Ointeraction$predicted);
+predicted_Ointeraction$conf.low <- exp(predicted_Ointeraction$conf.low); predicted_Ointeraction$conf.high <- exp(predicted_Ointeraction$conf.high);
+predicted_Ointeraction$region <- predicted_Ointeraction$group;
+predicted_Ointeraction$group_col <- predicted_Ointeraction$region_col;
+plot(predicted_Ointeraction) +
+  scale_color_manual(values = region_colors) +
+  scale_fill_manual(values = region_colors) +
+  labs(title = "Marginal Effect of Obesity",
+       x = "Prevalence of obesity (%)",
+       y = "Estimated DALYs (years per capita)") +
+  coord_cartesian(ylim = c(0, 20)) +
+  theme_minimal()
+
+
+
+
+
+# plotting lines of Alcohol by Region
+alcohol_trends <- emtrends(final_model, ~ region, var = "cenAlcohol")
+alcohol_trends <- as.data.frame(alcohol_trends)
+alcohol_trends$cenAlcohol.trend <- exp(alcohol_trends$cenAlcohol.trend)
+alcohol_trends$lower.CL <- exp(alcohol_trends$lower.CL)
+alcohol_trends$upper.CL <- exp(alcohol_trends$upper.CL)
+
+ggplot(alcohol_trends, aes(x = region, y = cenAlcohol.trend)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  coord_flip() +
+  scale_x_discrete(limits = rev(levels(factor(alzheimers$region)))) +
+  theme_minimal() +
+  labs(title = "Estimated multiplicative change in DALYs\nper percentage point increase in heavy drinking",
+       x = "Region",
+       y = "Estimated Multiplicative Change")
+
+
+# plotting lines of Obesity by Region
+obesity_trends <- emtrends(final_model, ~ region, var = "cenObesity")
+obesity_trends <- as.data.frame(obesity_trends)
+obesity_trends$cenObesity.trend <- exp(obesity_trends$cenObesity.trend)
+obesity_trends$lower.CL <- exp(obesity_trends$lower.CL)
+obesity_trends$upper.CL <- exp(obesity_trends$upper.CL)
+
+ggplot(obesity_trends, aes(x = region, y = cenObesity.trend)) +
+  geom_point() +  
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  coord_flip() +
+  scale_x_discrete(limits = rev(levels(factor(alzheimers$region)))) +
+  theme_minimal() +
+  labs(title = "Estimated multiplicative change in DALYs\nper percentage point increase in obesity",
+       x = "Region",
+       y = "Estimated Multiplicative Change")
 
 ```
 
@@ -321,96 +393,5 @@ qqline(residuals(final_model), col = "red")
 
 # Histogram
 hist(residuals(final_model), main = "Histogram of Residuals", xlab = "Residuals")
-
-par(mfrow = c(1, 1))
-
-
-
-# Effect Plot for Alcohol
-predicted_Ainteraction <- ggpredict(final_model, terms = c("cenAlcohol", "region"))
-#plot(predicted_Ainteraction) +
-#  scale_color_manual(values = region_colors) + 
-#  scale_fill_manual(values = region_colors) +
-#  labs(title = "Association between ln(DALY) and Alcohol",
-#       x = "Prevalence of heavy episodic drinking (%)",
-#       y = "Estimated ln(DALY) (years per capita)") +
-#  theme_minimal()
-
-# Back-transformed
-predicted_Ainteraction$predicted <- exp(predicted_Ainteraction$predicted);
-predicted_Ainteraction$conf.low <- exp(predicted_Ainteraction$conf.low); predicted_Ainteraction$conf.high <- exp(predicted_Ainteraction$conf.high);
-predicted_Ainteraction$region = predicted_Ainteraction$group;
-plot(predicted_Ainteraction) +
-  scale_color_manual(values = region_colors) + 
-  scale_fill_manual(values = region_colors) +
-  labs(title = "Marginal Effect of Alcohol",
-       x = "Prevalence of heavy episodic drinking (%)",
-       y = "Estimated DALY (years per capita)") +
-  theme_minimal()
-
-
-
-# Effect Plot for Obesity
-predicted_Ointeraction <- ggpredict(final_model, terms = c("cenObesity", "region"))
-#plot(predicted_Ointeraction) +
-#  scale_color_manual(values = region_colors) + 
-#  scale_fill_manual(values = region_colors) +
-#  labs(title = "Association between ln(DALY) and Obesity",
-#       x = "Prevalence of obesity (%)",
-#       y = "Estimated ln(DALY) (years per capita)") +
-#  theme_minimal()
-
-# Back-transformed
-predicted_Ointeraction$predicted <- exp(predicted_Ointeraction$predicted);
-predicted_Ointeraction$conf.low <- exp(predicted_Ointeraction$conf.low); predicted_Ointeraction$conf.high <- exp(predicted_Ointeraction$conf.high);
-predicted_Ointeraction$region <- predicted_Ointeraction$group;
-predicted_Ointeraction$group_col <- predicted_Ointeraction$region_col;
-plot(predicted_Ointeraction) +
-  scale_color_manual(values = region_colors) +
-  scale_fill_manual(values = region_colors) +
-  labs(title = "Marginal Effect of Obesity",
-       x = "Prevalence of obesity (%)",
-       y = "Estimated DALY (years per capita)") +
-  coord_cartesian(ylim = c(0, 20)) +
-  theme_minimal()
-
-```
-
-
-```{r}
-
-# plotting lines of Alcohol by Region
-alcohol_trends <- emtrends(final_model, ~ region, var = "cenAlcohol")
-alcohol_trends <- as.data.frame(alcohol_trends)
-alcohol_trends$cenAlcohol.trend <- exp(alcohol_trends$cenAlcohol.trend)
-alcohol_trends$lower.CL <- exp(alcohol_trends$lower.CL)
-alcohol_trends$upper.CL <- exp(alcohol_trends$upper.CL)
-
-ggplot(alcohol_trends, aes(x = region, y = cenAlcohol.trend)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
-  coord_flip() +
-  scale_x_discrete(limits = rev(levels(factor(alzheimers$region)))) +
-  theme_minimal() +
-  labs(title = "Estimated multiplicative change in DALY\nper percentage point increase in heavy episodic drinking",
-       x = "Region",
-       y = "Estimated Multiplicative Change")
-
-# plotting lines of Obesity by Region
-obesity_trends <- emtrends(final_model, ~ region, var = "cenObesity")
-obesity_trends <- as.data.frame(obesity_trends)
-obesity_trends$cenObesity.trend <- exp(obesity_trends$cenObesity.trend)
-obesity_trends$lower.CL <- exp(obesity_trends$lower.CL)
-obesity_trends$upper.CL <- exp(obesity_trends$upper.CL)
-
-ggplot(obesity_trends, aes(x = region, y = cenObesity.trend)) +
-  geom_point() +  
-  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
-  coord_flip() +
-  scale_x_discrete(limits = rev(levels(factor(alzheimers$region)))) +
-  theme_minimal() +
-  labs(title = "Estimated multiplicative change in DALY\nper percentage point increase in obesity",
-       x = "Region",
-       y = "Estimated Multiplicative Change")
 
 ```
