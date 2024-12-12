@@ -1,9 +1,8 @@
 ---
-title: "STAT414_Project"
+title: "Analyzing the Impact of Dementia Risk Factors on Regions Worldwide"
+subtitle: "STAT 414 - Franchesca Garcia and Isha Nayak"
 authors: "Franchesca Garcia and Isha Nayak"
 output: html_document
-editor_options: 
-  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -32,7 +31,7 @@ alcohol <- read_csv("dementia_data/alcohol.csv")
 
 ```
 
-```{r data cleaning}
+```{r data cleaning 1}
 
 # extracting the values we are interested in
 # grand mean centering
@@ -71,7 +70,7 @@ alcohol <- alcohol |>
 
 ```
 
-```{r data cleaning}
+```{r data cleaning 2}
 
 # joining data into one dataframe
 
@@ -94,7 +93,7 @@ dementia <- DALYs |>
 
 ```
 
-```{r visual data exploration}
+```{r visual data exploration 1}
 
 # matrix plot
 pairs(dementia[, c("cenLogDALYs", 
@@ -109,7 +108,7 @@ pairs(dementia[, c("cenLogDALYs",
 ```
 
 
-```{r visual data exploration}
+```{r visual data exploration 2}
 
 # assigning colors to Regions
 region_colors <- c(
@@ -181,7 +180,7 @@ dementia |>
 
 ```
 
-```{r visual data exploration}
+```{r visual data exploration 3}
 
 # scatter plot of DALYs by Region
 DALYs_means <- dementia |>
