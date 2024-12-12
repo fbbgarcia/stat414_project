@@ -19,77 +19,7 @@ library(emmeans)
 
 ```{r reading in data}
 
-DALYs <- readxl::read_xlsx("dementia_data/daly.xlsx")
-# selecting standardized DALYs
-DALYs <- DALYs[15:20,]
-
-overweight <- read_csv("dementia_data/overweight.csv")
-obesity <- read_csv("dementia_data/obesity.csv")
-inactivity <- read_csv("dementia_data/inactivity.csv")
-hypertension <- read_csv("dementia_data/hypertension.csv")
-alcohol <- read_csv("dementia_data/alcohol.csv")
-
-```
-
-```{r data cleaning 1}
-
-# extracting the values we are interested in
-# grand mean centering
-
-DALYs <- DALYs |>
-  pivot_longer(cols = 2:186, names_to = "country", values_to = "DALYs") |>
-  mutate(cenDALYs = DALYs - mean(DALYs))
-
-overweight <- overweight |>
-  filter(Dim1 == "Both sexes") |>
-  select(Location, Period, FactValueNumeric) |>
-  rename(country = Location, year = Period, overweight = FactValueNumeric) |>
-  mutate(cenOverweight = overweight - mean(overweight))
-
-obesity <- obesity |>
-  select(ParentLocation, Location, FactValueNumeric, Period) |>
-  rename(region = ParentLocation, country = Location, year = Period, obesity = FactValueNumeric) |>
-  mutate(cenObesity = obesity - mean(obesity))
-
-inactivity <- inactivity |>
-  select(Location, FactValueNumeric, Period) |>
-  rename(country = Location, year = Period, inactivity = FactValueNumeric) |>
-  mutate(cenInactivity = inactivity - mean(inactivity))
-
-hypertension <- hypertension |>
-  filter(Dim1 == "Both sexes",
-        IndicatorCode == "NCD_HYP_PREVALENCE_A") |>
-  select(Location, FactValueNumeric, Period) |>
-  rename(country = Location, year = Period, hypertension = FactValueNumeric) |>
-  mutate(cenHypertension = hypertension - mean(hypertension))
-
-alcohol <- alcohol |>
-  select(Location, FactValueNumeric, Period) |>
-  rename(country = Location, year = Period, alcohol = FactValueNumeric) |>
-  mutate(cenAlcohol = alcohol - mean(alcohol, na.rm = TRUE))
-
-```
-
-```{r data cleaning 2}
-
-# joining data into one dataframe
-
-dementia <- DALYs |>
-  inner_join(overweight, by = c("year", "country")) |>
-  inner_join(obesity, by = c("year", "country")) |>
-  inner_join(inactivity, by = c("year", "country")) |>
-  inner_join(hypertension, by = c("year", "country")) |>
-  inner_join(alcohol, by = c("year", "country")) |>
-  
-  # removing South Sudan because it is missing values for Alcohol
-  filter(country != "South Sudan") |>
-    
-  # grand mean centering Year now that all values are in one dataframe
-  mutate(cenYear = year - mean(year)) |>
-  
-  # log transformation on DALYs b/c of nonlinear trends
-  mutate(logDALYs = log(DALYs)) |>
-  mutate(cenLogDALYs = logDALYs - mean(logDALYs)) 
+dementia <- read_csv("dementia_final_data.csv")
 
 ```
 
