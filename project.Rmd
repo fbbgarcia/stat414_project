@@ -75,7 +75,7 @@ alcohol <- alcohol |>
 
 # joining data into one dataframe
 
-alzheimers <- DALYs |>
+dementia <- DALYs |>
   inner_join(overweight, by = c("year", "country")) |>
   inner_join(obesity, by = c("year", "country")) |>
   inner_join(inactivity, by = c("year", "country")) |>
@@ -97,7 +97,7 @@ alzheimers <- DALYs |>
 ```{r visual data exploration}
 
 # matrix plot
-pairs(alzheimers[, c("cenLogDALYs", 
+pairs(dementia[, c("cenLogDALYs", 
                      "cenYear",
                      "cenAlcohol", 
                      "cenHypertension", 
@@ -124,7 +124,7 @@ region_colors <- c(
 
 
 # scatter plot of DALYs by Alcohol
-alzheimers |>
+dementia |>
   ggplot() +
     geom_point(aes(x = alcohol, y = DALYs, colour = region),
                 alpha = 1, stroke = FALSE, size = 1.5) +
@@ -137,7 +137,7 @@ alzheimers |>
          linetype = "Region") 
 
 # scatter plots of DALYs by Alcohol separated by Region
-alzheimers |>
+dementia |>
   ggplot() +
     geom_point(aes(x = alcohol, y = DALYs, colour = region),
                 alpha = 1, stroke = FALSE, size = 1, show.legend = FALSE) +
@@ -153,7 +153,7 @@ alzheimers |>
 
 
 # scatter plot of DALYs by Obesity
-alzheimers |>
+dementia |>
   ggplot() +
     geom_point(aes(x = obesity, y = DALYs, colour = region),
                 alpha = 1, stroke = FALSE, size = 1.5) +
@@ -166,7 +166,7 @@ alzheimers |>
          linetype = "Region") 
 
 # scatter plots of DALYs by Obesity seperated by Region
-alzheimers |>
+dementia |>
   ggplot() +
     geom_point(aes(x = obesity, y = DALYs, colour = region),
                 alpha = 1, stroke = FALSE, size = 1, show.legend = FALSE) +
@@ -184,11 +184,11 @@ alzheimers |>
 ```{r visual data exploration}
 
 # scatter plot of DALYs by Region
-DALYs_means <- alzheimers |>
+DALYs_means <- dementia |>
   group_by(region) |>
   summarise(mean_DALYs = mean(DALYs, na.rm = TRUE))
 
-alzheimers |>
+dementia |>
   ggplot() +
     geom_point(aes(x = region, y = DALYs, color = region), alpha = 0.4, show.legend = FALSE) +
     geom_point(data = DALYs_means, aes(x = region, y = mean_DALYs), show.legend = FALSE, color = "black") +
@@ -201,11 +201,11 @@ alzheimers |>
 
 
 # scatter plot of Alcohol by Region
-alcohol_means <- alzheimers |>
+alcohol_means <- dementia |>
   group_by(region) |>
   summarise(mean_Alcohol = mean(alcohol, na.rm = TRUE))
 
-alzheimers |>
+dementia |>
   ggplot() +
     geom_point(aes(x = region, y = alcohol, color = region), alpha = 0.4, show.legend = FALSE) +
     geom_point(data = alcohol_means, aes(x = region, y = mean_Alcohol), show.legend = FALSE, color = "black") +
@@ -218,11 +218,11 @@ alzheimers |>
 
 
 # scatter plot of Obesity by Region
-obesity_means <- alzheimers |>
+obesity_means <- dementia |>
   group_by(region) |>
   summarise(mean_Obesity = mean(obesity, na.rm = TRUE))
 
-alzheimers |>
+dementia |>
   ggplot() +
     geom_point(aes(x = region, y = obesity, color = region), alpha = 0.4, show.legend = FALSE) +
     geom_point(data = obesity_means, aes(x = region, y = mean_Obesity), show.legend = FALSE, color = "black") +
@@ -237,11 +237,11 @@ alzheimers |>
 ```{r grouping variable exploration}
 
 # exploring variation between Countries (Level 2) 
-modelCountryOLS <- lm(cenLogDALYs ~ country, data = alzheimers)
+modelCountryOLS <- lm(cenLogDALYs ~ country, data = dementia)
 anova(modelCountryOLS)
 
 # scatter plot of DALYs by Country
-#alzheimers |>
+#dementia |>
 #  ggplot() +
 #    geom_point(aes(x = country, y = DALYs, color = region), 
 #        show.legend = FALSE, label = FALSE) +
@@ -256,7 +256,7 @@ anova(modelCountryOLS)
 ```{r null model}
 
 # null model with random intercepts for Country
-model0Country <- lmer(cenLogDALYs ~ (1 | country), data = alzheimers)
+model0Country <- lmer(cenLogDALYs ~ (1 | country), data = dementia)
 summary(model0Country)
 performance(model0Country)
 logLik(model0Country)
@@ -268,23 +268,23 @@ logLik(model0Country)
 # exploring fixed effects and cross-level interactions
 
 # adding Level 1 variables
-model1a <- lmer(cenLogDALYs ~ cenYear + cenAlcohol + cenObesity + (1 | country), data = alzheimers)
+model1a <- lmer(cenLogDALYs ~ cenYear + cenAlcohol + cenObesity + (1 | country), data = dementia)
 summary(model1a)
 anova(model0Country, model1a)
 
 # adding Region (Level 2 variable)
-model1b <- lmer(cenLogDALYs ~ cenYear + cenAlcohol + cenObesity + region + (1 | country), data = alzheimers)
+model1b <- lmer(cenLogDALYs ~ cenYear + cenAlcohol + cenObesity + region + (1 | country), data = dementia)
 summary(model1b)
 anova(model1a, model1b)
 
 # adding interaction between Obesity and Region
-model1c <- lmer(cenLogDALYs ~ cenYear + cenAlcohol + cenObesity*region + (1 | country), data = alzheimers)
+model1c <- lmer(cenLogDALYs ~ cenYear + cenAlcohol + cenObesity*region + (1 | country), data = dementia)
 summary(model1c)
 anova(model1b, model1c)
 
 # adding interaction between Alcohol and Region
 # FINAL MODEL
-model1d <- lmer(cenLogDALYs ~ cenYear + cenAlcohol*region + cenObesity*region + (1 | country), data = alzheimers)
+model1d <- lmer(cenLogDALYs ~ cenYear + cenAlcohol*region + cenObesity*region + (1 | country), data = dementia)
 summary(model1d)
 anova(model1c, model1d)
 
@@ -353,7 +353,7 @@ ggplot(alcohol_trends, aes(x = region, y = cenAlcohol.trend)) +
   geom_point() +
   geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
   coord_flip() +
-  scale_x_discrete(limits = rev(levels(factor(alzheimers$region)))) +
+  scale_x_discrete(limits = rev(levels(factor(dementia$region)))) +
   theme_minimal() +
   labs(title = "Estimated multiplicative change in DALYs\nper percentage point increase in heavy drinking",
        x = "Region",
@@ -371,7 +371,7 @@ ggplot(obesity_trends, aes(x = region, y = cenObesity.trend)) +
   geom_point() +  
   geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
   coord_flip() +
-  scale_x_discrete(limits = rev(levels(factor(alzheimers$region)))) +
+  scale_x_discrete(limits = rev(levels(factor(dementia$region)))) +
   theme_minimal() +
   labs(title = "Estimated multiplicative change in DALYs\nper percentage point increase in obesity",
        x = "Region",
